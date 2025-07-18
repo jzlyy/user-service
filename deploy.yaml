@@ -21,6 +21,10 @@ spec:
           ports:
             - containerPort: 8080
               name: user-backend
+          volumeMounts:
+            - name: user-volume 
+              mountPath: "/etc/secrets"
+              readOnly: true
           resources:
             requests:
               cpu: 1024m
@@ -42,3 +46,8 @@ spec:
             periodSeconds: 10
             successThshold: 2
             failureThshold: 3
+      volumes:
+        - name: user-volume
+          secret:
+            secretName: user-service
+
