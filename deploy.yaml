@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service 
+  namespace: backend
+  labels:
+    app: user
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: user
+  template:
+    metadata:
+      labels:
+        app: user
+    spec:
+      containers:
+        - name: user-service
+          image: 
+          ports:
+            - containerPort: 8080
+              name: user-backend
+          volumeMounts:
+            - name: user-volume 
+              mountPath: "/etc/secrets"
+              readOnly: true
+          resources:
+            requests:
+              cpu: 1024m
+              memory: 800Mi
+            limits:
+              cpu: 2048m
+              memory: 1200Mi
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initalDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThshold: 3
+          readinressProbe:
+            tcpSocket:
+              port: 8080
+            initalDelaySeconds: 15
+            periodSeconds: 10
+            successThshold: 2
+            failureThshold: 3
+      volumes:
+        - name: user-volume
+          secret:
+            secretName: user-service
+
