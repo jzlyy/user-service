@@ -13,10 +13,6 @@ type Config struct {
 	DBName         string
 	JWTSecret      string
 	RabbitMQURL    string
-	SMTPHost       string
-	SMTPPort       string
-	SMTPUser       string
-	SMTPPass       string
 	FromEmail      string
 	SendGridAPIKey string
 	IsEUAccount    bool
