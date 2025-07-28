@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: backend
+data:
+  DB_USER: "root"
+  DB_HOST: "localhost"
+  DB_PORT: "3306"
+  DB_NAME: "ecommerce"
+  FROM_EMAIL: "wwyxhqc1@jzlyy.xyz"
+  SENDGRID_EU_ACCOUNT: "false"
