@@ -30,13 +30,6 @@ COPY --from=builder /app/user-service .
 # 暴露端口
 EXPOSE 8080
 
-# 设置默认环境变量
-ENV DB_HOST=host.docker.internal \
-    DB_PORT=3306 \
-    DB_USER=root \
-    DB_NAME=ecommerce \
-    RABBITMQ_URL="amqp://admin:rabbitmq@172.168.20.30:5672/"
-
 # 使用非root用户运行
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser
