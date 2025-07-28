@@ -1,9 +1,12 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-bases:
+resources:
   - ../../base
-patchesStrategicMerge:
-  - patch.yaml
+patches:
+  - path: patch.yaml
+    target:
+      kind: Deployment
+      name: golang-app
 images:
   - name: docker.io/zfc123/golang-app
     newTag: latest  # ArgoCD Image Updater 会自动更新这个值
