@@ -16,7 +16,7 @@ spec:
         - docker.io/zfc123/golang-app:latest
   destination:
     server: https://kubernetes.default.svc  # 表示部署到同一个集群
-    namespace: backupend
+    namespace: backend
   syncPolicy:
     automated:
       selfHeal: true  # 自动修复漂移
