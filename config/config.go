@@ -20,14 +20,20 @@ type Config struct {
 
 func LoadConfig() *Config {
 	return &Config{
-		DBUser:         getEnv("DB_USER", "root"),
-		DBHost:         getEnv("DB_HOST", "localhost"),
-		DBPort:         getEnv("DB_PORT", "3306"),
-		DBName:         getEnv("DB_NAME", "ecommerce"),
-		RabbitMQURL:    getEnv("RABBITMQ_URL", "amqp://admin:rabbitmq@172.168.20.30:5672/"),
-		FromEmail:      getEnv("FROM_EMAIL", "wwyxhqc1@jzlyy.xyz"),
-		IsEUAccount:    getEnvAsBool("SENDGRID_EU_ACCOUNT", false)}
-
+		DBUser:         getEnv("DB_USER", ""),
+                DBHost:         getEnv("DB_HOST", ""),
+                DBPort:         getEnv("DB_PORT", ""),
+                DBPassword:     getEnv("DB_PASSWORD", ""),
+                DBName:         getEnv("DB_NAME", ""),
+                JWTSecret:      getEnv("JWT_SECRET", ""),
+                FromEmail:      getEnv("FROM_EMAIL", ""),
+                SendGridAPIKey: getEnv("SENDGRID_API_KEY", ""),
+                IsEUAccount:    getEnvAsBool("SENDGRID_EU_ACCOUNT", ""),
+                RabbitMQURL:    fmt.Sprintf("amqp://%s:%s@%s:%s",   // 运行时拼接
+                                getEnv("RABBITMQ_USER", ""),
+                                getEnv("RABBITMQ_PASSWORD", ""),
+                                getEnv("RABBITMQ_HOST", ""),
+                                getEnv("RABBITMQ_PORT", ""))}
 }
 
 func getEnv(key, defaultValue string) string {
