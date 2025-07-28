@@ -14,7 +14,7 @@ spec:
         - name: docker.io/zfc123/golang-app
           newTag: latest
   destination:
-    server: https://kubernetes.default.svc  # 表示部署到同一个集群
+    server: https://kubernetes.default.svc
     namespace: backend
   syncPolicy:
     automated:
