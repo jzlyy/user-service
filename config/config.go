@@ -31,7 +31,7 @@ func LoadConfig() *Config {
                 IsEUAccount:    getEnvAsBool("SENDGRID_EU_ACCOUNT", ""),
 		RabbitMQUser:   getEnv("RABBITMQ_USER", ""),  
                 RabbitMQPass:   getEnv("RABBITMQ_PASSWORD", ""),   
-                RabbitMQURL:    fmt.Sprintf("amqp://%s:%s@%s:%s",
+                RabbitMQURL:    fmt.Sprintf("amqp://%s:%s@%s:%s/",
                                 getEnv("RABBITMQ_USER", ""),
                                 getEnv("RABBITMQ_PASSWORD", ""),
                                 getEnv("RABBITMQ_HOST", ""),
