@@ -29,7 +29,9 @@ func LoadConfig() *Config {
                 FromEmail:      getEnv("FROM_EMAIL", ""),
                 SendGridAPIKey: getEnv("SENDGRID_API_KEY", ""),
                 IsEUAccount:    getEnvAsBool("SENDGRID_EU_ACCOUNT", ""),
-                RabbitMQURL:    fmt.Sprintf("amqp://%s:%s@%s:%s",   // 运行时拼接
+		RabbitMQUser:   getEnv("RABBITMQ_USER", ""),  
+                RabbitMQPass:   getEnv("RABBITMQ_PASSWORD", ""),   
+                RabbitMQURL:    fmt.Sprintf("amqp://%s:%s@%s:%s",
                                 getEnv("RABBITMQ_USER", ""),
                                 getEnv("RABBITMQ_PASSWORD", ""),
                                 getEnv("RABBITMQ_HOST", ""),
