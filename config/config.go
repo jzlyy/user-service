@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"strings"
 )
@@ -12,8 +13,6 @@ type Config struct {
 	DBPort         string
 	DBName         string
 	JWTSecret      string
-	RabbitMQUser   string
-        RabbitMQPass   string
 	RabbitMQURL    string
 	FromEmail      string
 	SendGridAPIKey string
@@ -31,8 +30,6 @@ func LoadConfig() *Config {
                 FromEmail:      getEnv("FROM_EMAIL", ""),
                 SendGridAPIKey: getEnv("SENDGRID_API_KEY", ""),
                 IsEUAccount:    getEnvAsBool("SENDGRID_EU_ACCOUNT", false),
-		RabbitMQUser:   getEnv("RABBITMQ_USER", ""),  
-                RabbitMQPass:   getEnv("RABBITMQ_PASSWORD", ""),   
                 RabbitMQURL:    fmt.Sprintf("amqp://%s:%s@%s:%s",
                                 getEnv("RABBITMQ_USER", ""),
                                 getEnv("RABBITMQ_PASSWORD", ""),
