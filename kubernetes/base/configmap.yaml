@@ -10,3 +10,5 @@ data:
   DB_NAME: "ecommerce"
   FROM_EMAIL: "wwyxhqc1@jzlyy.xyz"
   SENDGRID_EU_ACCOUNT: "false"
+  RABBITMQ_HOST: "172.168.20.30"
+  RABBITMQ_PORT: "5672"
