@@ -3,17 +3,16 @@ kind: Application
 metadata:
   name: golang-app
   namespace: argocd 
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
     repoURL: https://github.com/jzlyy/user-service.git
     path: kubernetes/overlays/production
-    targetRevision: main
+    targetRevision: HEAD
     kustomize:
       images:
-        - docker.io/zfc123/golang-app:latest
+        - name: docker.io/zfc123/golang-app
+          newTag: latest
   destination:
     server: https://kubernetes.default.svc  # 表示部署到同一个集群
     namespace: backend
@@ -24,9 +23,3 @@ spec:
     syncOptions:
       - CreateNamespace=true  # 如果命名空间不存在则创建
       - ApplyOutOfSyncOnly=true
-    retry:
-      limit: 5
-      backoff:
-        duration: 5s
-        factor: 2
-        maxDuration: 3m
