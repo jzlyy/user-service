@@ -6,7 +6,7 @@ patches:
   - path: patch.yaml
     target:
       kind: Deployment
-      name: golang-app
+      name: user-service
 images:
-  - name: docker.io/zfc123/golang-app
+  - name: crpi-5dxngct78yux2w9r.cn-chengdu.personal.cr.aliyuncs.com/product_123/user-service 
     newTag: latest  # ArgoCD Image Updater 会自动更新这个值
