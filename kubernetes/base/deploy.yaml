@@ -15,12 +15,12 @@ spec:
       labels:
         app: user
       annotations:
-        argocd-image-updater.argoproj.io/image-list: app=docker.io/zfc123/golang-app
+        argocd-image-updater.argoproj.io/image-list: app=crpi-5dxngct78yux2w9r.cn-chengdu.personal.cr.aliyuncs.com/product_123/user-service
         argocd-image-updater.argoproj.io/app.update-strategy: latest
     spec:
       containers:
         - name: user-service
-          image: docker.io/zfc123/golang-app:latest
+          image: crpi-5dxngct78yux2w9r.cn-chengdu.personal.cr.aliyuncs.com/product_123/user-service:latest
           ports:
             - containerPort: 8080
               name: user-backend
@@ -52,6 +52,8 @@ spec:
             periodSeconds: 10
             successThshold: 2
             failureThshold: 3
+      imagePullSecrets:
+        - name: aliyun-acr-secret
       volumes:
         - name: user-configmap
           configmap:
