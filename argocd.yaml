@@ -1,17 +1,17 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: golang-app
+  name: user-service
   namespace: argocd 
 spec:
-  project: default
+  project: golang
   source:
     repoURL: https://github.com/jzlyy/user-service.git
     path: kubernetes/overlays/production
     targetRevision: HEAD
     kustomize:
       images:
-        - name: docker.io/zfc123/golang-app
+        - name: crpi-5dxngct78yux2w9r.cn-chengdu.personal.cr.aliyuncs.com/product_123/user-service
           newTag: latest
   destination:
     server: https://kubernetes.default.svc
