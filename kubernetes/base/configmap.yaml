@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: app-config
+  name: user-service
   namespace: backend
 data:
   DB_USER: "root"
