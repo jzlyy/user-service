@@ -1,14 +1,14 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: golang-app
+  name: user-service
   namespace: backend
 spec:
   replicas: 5  # 生产环境使用更多副本
   template:
     spec:
       containers:
-      - name: app
+      - name: user-service
         resources:
           limits:
             cpu: "1000m"
