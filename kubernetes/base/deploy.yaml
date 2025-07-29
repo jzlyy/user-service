@@ -25,7 +25,10 @@ spec:
             - containerPort: 8080
               name: user-backend
           volumeMounts:
-            - name: user-volume 
+            - name: user-configmap
+              mountPath: "/etc/configmap"
+              readOnly: true
+            - name: user-secret 
               mountPath: "/etc/secrets"
               readOnly: true
           resources:
@@ -50,7 +53,10 @@ spec:
             successThshold: 2
             failureThshold: 3
       volumes:
-        - name: user-volume
+        - name: user-configmap
+          configmap:
+            secretName: user-service
+        - name: user-secret
           secret:
             secretName: user-service
 
