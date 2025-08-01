@@ -12,7 +12,7 @@ const (
 	DelayedExchange   = "delayed_exchange"
 )
 
-func SetupRabbitMQ() (*amqp.Channel, func()) {
+func SetupRabbitMQ() (*amqp.Connection, func()) {
 	cfg := config.LoadConfig()
 
 	conn, err := amqp.Dial(cfg.RabbitMQURL)
@@ -65,15 +65,11 @@ func SetupRabbitMQ() (*amqp.Channel, func()) {
 	}
 
 	cleanup := func() {
-		err := ch.Close()
-		if err != nil {
-			return
-		}
 		err = conn.Close()
 		if err != nil {
 			return
 		}
 	}
 
-	return ch, cleanup
+	return conn, cleanup
 }
