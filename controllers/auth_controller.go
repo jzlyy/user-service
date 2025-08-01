@@ -16,16 +16,24 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var rabbitmqCh *amqp.Channel // 全局RabbitMQ通道
+var rabbitmqConn *amqp.Connection //
 
-func SetRabbitMQChannel(ch *amqp.Channel) {
-	rabbitmqCh = ch
-}
+func SetRabbitMQConnection(conn *amqp.Connection) {
+	rabbitmqConn = conn
+} // 全局RabbitMQ连接
 
 func Register(c *gin.Context) {
 	var user models.User
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 密码强度检查
+	if !utils.ValidatePasswordStrength(user.Password) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "密码必须至少8位，且包含大写字母、小写字母、数字和特殊字符中的三种",
+		})
 		return
 	}
 
@@ -49,15 +57,29 @@ func Register(c *gin.Context) {
 		time.Now(),
 	)
 	if err != nil {
+		log.Printf("[AUDIT] Failed to register user: %s, error: %v", user.Email, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create user"})
 		return
 	}
 
 	userID, _ := result.LastInsertId()
+	log.Printf("[AUDIT] User registered: ID=%d, Email=%s", userID, user.Email)
 	c.JSON(http.StatusCreated, gin.H{"id": userID, "message": "User created"})
 
 	// 注册成功后发送延迟消息
-	if rabbitmqCh != nil {
+	if rabbitmqConn != nil {
+		ch, err := rabbitmqConn.Channel()
+		if err != nil {
+			log.Printf("Failed to create RabbitMQ channel: %v", err)
+			return
+		}
+		defer func(ch *amqp.Channel) {
+			err := ch.Close()
+			if err != nil {
+				log.Printf("Failed to close RabbitMQ channel: %v", err)
+			}
+		}(ch)
+
 		msg := amqp.Publishing{
 			DeliveryMode: amqp.Persistent,
 			Timestamp:    time.Now(),
@@ -68,7 +90,7 @@ func Register(c *gin.Context) {
 			},
 		}
 
-		err := rabbitmqCh.Publish(
+		err = ch.Publish(
 			rabbitmq.DelayedExchange,
 			"", // routing key
 			false,
@@ -105,10 +127,13 @@ func Login(c *gin.Context) {
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		log.Printf("[AUDIT] Failed login attempt: %s", req.Email)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
+	log.Printf("[AUDIT] User logged in: ID=%d", user.ID)
 
+	//生成Token
 	token, err := utils.GenerateToken(user.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate token"})
