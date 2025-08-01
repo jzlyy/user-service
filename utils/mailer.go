@@ -2,6 +2,7 @@ package utils
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"user-service/config"
 
@@ -41,6 +42,7 @@ func SendWelcomeEmail(toEmail string) error {
 		return nil
 	}
 
-	log.Printf("SendGrid returned error: %d %s ", response.StatusCode, response.Body)
-	return errors.New("sendgrid error: " + response.Body)
+	errorMsg := fmt.Sprintf("SendGrid error [%d]: %s", response.StatusCode, response.Body)
+	log.Printf(errorMsg)
+	return errors.New(errorMsg)
 }
