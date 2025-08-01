@@ -4,6 +4,7 @@ metadata:
   name: user-service
   namespace: backend
 data:
+  GIN_MODE: "release"
   DB_HOST: "mysql-headless.mysql.svc.cluster.local"
   DB_PORT: "3306"
   DB_NAME: "ecommerce"
