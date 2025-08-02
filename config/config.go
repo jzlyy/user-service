@@ -27,6 +27,9 @@ type Config struct {
 	EtcdPassword   string
 	ServiceName    string
 	ServicePort    int
+	RabbitMQDelay  int `json:"rabbitmq_delay"` // 延迟消息时间(毫秒)
+	EtcdTTL        int `json:"etcd_ttl"`       // ETCD租约时间(秒)
+	CacheTTL       int `json:"cache_ttl"`      // 缓存时间(分钟)
 }
 
 func LoadConfig() *Config {
@@ -49,6 +52,9 @@ func LoadConfig() *Config {
 		EtcdPassword:   getEnv("ETCD_PASSWORD", ""),
 		ServiceName:    getEnv("SERVICE_NAME", ""),
 		ServicePort:    getEnvAsInt("SERVICE_PORT", 8080),
+		RabbitMQDelay:  getEnvAsInt("RABBITMQ_DELAY", 5000),
+		EtcdTTL:        getEnvAsInt("ETCD_TTL", 15),
+		CacheTTL:       getEnvAsInt("CACHE_TTL", 30),
 		RabbitMQURL: fmt.Sprintf("amqp://%s:%s@%s:%s", // 运行时拼接
 			getEnv("RABBITMQ_USER", ""),
 			getEnv("RABBITMQ_PASSWORD", ""),
