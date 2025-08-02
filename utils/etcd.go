@@ -3,8 +3,11 @@ package utils
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"time"
+	"user-service/config"
 
 	"go.etcd.io/etcd/client/v3"
 )
@@ -30,7 +33,10 @@ func NewEtcdClient(address, username, password string) (*EtcdClient, error) {
 	return &EtcdClient{client: client}, nil
 }
 
-func (e *EtcdClient) RegisterService(serviceName string, port int, ttl int) error {
+func (e *EtcdClient) RegisterService(serviceName string, port int) error {
+	cfg := config.LoadConfig()
+	ttl := cfg.EtcdTTL // 从配置获取TTL
+
 	// 创建租约
 	resp, err := e.client.Grant(context.Background(), int64(ttl))
 	if err != nil {
@@ -59,7 +65,46 @@ func (e *EtcdClient) RegisterService(serviceName string, port int, ttl int) erro
 	go e.keepAlive()
 
 	log.Printf("Registered in ETCD: %s -> %s", key, value)
+
+	// 启动健康检查协程
+	go e.healthCheck(serviceName, port)
+
 	return nil
+}
+
+func (e *EtcdClient) healthCheck(serviceName string, port int) {
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		// 使用localhost可能有问题，改为相对路径
+		url := fmt.Sprintf("http://127.0.0.1:%d/health", port)
+		resp, err := http.Get(url)
+
+		// 处理可能的错误
+		if err != nil {
+			log.Printf("Health check failed: %v", err)
+			continue
+		}
+
+		// 确保关闭响应体
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				log.Printf("Health check failed: %v", err)
+			}
+		}(resp.Body)
+
+		if resp.StatusCode != http.StatusOK {
+			log.Printf("Health check failed with status: %d", resp.StatusCode)
+			continue
+		}
+
+		// 刷新租约
+		if _, err := e.client.KeepAliveOnce(context.Background(), e.lease); err != nil {
+			log.Printf("Failed to refresh lease: %v", err)
+		}
+	}
 }
 
 func (e *EtcdClient) keepAlive() {
