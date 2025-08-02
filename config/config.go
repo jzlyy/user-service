@@ -13,6 +13,10 @@ type Config struct {
 	DBHost         string
 	DBPort         string
 	DBName         string
+	RedisHost      string
+	RedisPort      string
+	RedisPassword  string
+	RedisDB        int
 	JWTSecret      string
 	RabbitMQURL    string
 	FromEmail      string
@@ -32,6 +36,10 @@ func LoadConfig() *Config {
 		DBPort:         getEnv("DB_PORT", ""),
 		DBPassword:     getEnv("DB_PASSWORD", ""),
 		DBName:         getEnv("DB_NAME", ""),
+		RedisHost:      getEnv("REDIS_HOST", ""),
+		RedisPort:      getEnv("REDIS_PORT", ""),
+		RedisPassword:  getEnv("REDIS_PASSWORD", ""),
+		RedisDB:        getEnvAsInt("REDIS_DB", 0),
 		JWTSecret:      getEnv("JWT_SECRET", ""),
 		FromEmail:      getEnv("FROM_EMAIL", ""),
 		SendGridAPIKey: getEnv("SENDGRID_API_KEY", ""),
@@ -46,6 +54,7 @@ func LoadConfig() *Config {
 			getEnv("RABBITMQ_PASSWORD", ""),
 			getEnv("RABBITMQ_HOST", ""),
 			getEnv("RABBITMQ_PORT", ""))}
+
 }
 
 func getEnv(key, defaultValue string) string {
