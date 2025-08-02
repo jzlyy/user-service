@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"user-service/database"
+	"user-service/services"
 	"user-service/utils"
 )
 
@@ -31,33 +32,25 @@ func GetUserProfile(c *gin.Context) {
 		return
 	}
 
-	var user struct {
-		ID        int    `json:"id"`
-		Username  string `json:"username"`
-		Email     string `json:"email"`
-		CreatedAt string `json:"created_at"`
+	// 使用服务层查询函数
+	user, err := services.GetUserByID(userID.(int))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		} else {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		}
+		return
 	}
 
-	err := database.DB.QueryRow(`
-		SELECT id, username, email, created_at 
-		FROM users 
-		WHERE id = ?`, userID,
-	).Scan(&user.ID, &user.Username, &user.Email, &user.CreatedAt)
+	// 更新缓存（异步）
+	go func() {
+		if err := utils.SetUserCache(user.ID, user); err != nil {
+			log.Printf("Failed to cache user: %v", err)
+		}
+	}()
 
-	switch {
-	case errors.Is(err, sql.ErrNoRows):
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-	case err != nil:
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
-	default:
-		// 更新缓存（异步）
-		go func() {
-			if err := utils.SetUserCache(user.ID, user); err != nil {
-				log.Printf("Failed to cache user: %v", err)
-			}
-		}()
-		c.JSON(http.StatusOK, user)
-	}
+	c.JSON(http.StatusOK, user)
 }
 
 func UpdatePassword(c *gin.Context) {
@@ -90,6 +83,12 @@ func UpdatePassword(c *gin.Context) {
 		return
 	}
 
+	// 检查新密码是否使用过
+	if utils.IsPasswordUsed(userID.(int), req.NewPassword) {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Cannot reuse recent passwords"})
+		return
+	}
+
 	// 更新密码
 	newHash, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
 	if err != nil {
@@ -102,6 +101,9 @@ func UpdatePassword(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not update password"})
 		return
 	}
+
+	// 添加密码到历史记录
+	utils.AddPasswordHistory(userID.(int), string(newHash))
 
 	// 更新成功后删除缓存
 	go func() {
