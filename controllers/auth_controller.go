@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"user-service/config"
 	"user-service/database"
 	"user-service/models"
 	"user-service/rabbitmq"
@@ -16,13 +17,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var rabbitmqConn *amqp.Connection //
-
-func SetRabbitMQConnection(conn *amqp.Connection) {
-	rabbitmqConn = conn
-} // 全局RabbitMQ连接
-
 func Register(c *gin.Context) {
+	// 添加配置加载
+	cfg := config.LoadConfig()
+
 	var user models.User
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -67,40 +65,36 @@ func Register(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"id": userID, "message": "User created"})
 
 	// 注册成功后发送延迟消息
-	if rabbitmqConn != nil {
-		ch, err := rabbitmqConn.Channel()
-		if err != nil {
-			log.Printf("Failed to create RabbitMQ channel: %v", err)
-			return
-		}
-		defer func(ch *amqp.Channel) {
-			err := ch.Close()
-			if err != nil {
-				log.Printf("Failed to close RabbitMQ channel: %v", err)
-			}
-		}(ch)
+	ch := rabbitmq.GetChannel()
+	if ch == nil {
+		log.Printf("Failed to get RabbitMQ channel")
+		return
+	}
+	defer rabbitmq.ReleaseChannel(ch)
 
-		msg := amqp.Publishing{
-			DeliveryMode: amqp.Persistent,
-			Timestamp:    time.Now(),
-			ContentType:  "text/plain",
-			Body:         []byte(user.Email),
-			Headers: amqp.Table{
-				"x-delay": 5000, // 5秒延迟(单位毫秒)
-			},
-		}
+	// 加载配置获取RabbitMQ延迟
+	cfg = config.LoadConfig()
 
-		err = ch.Publish(
-			rabbitmq.DelayedExchange,
-			"", // routing key
-			false,
-			false,
-			msg,
-		)
+	msg := amqp.Publishing{
+		DeliveryMode: amqp.Persistent,
+		Timestamp:    time.Now(),
+		ContentType:  "text/plain",
+		Body:         []byte(user.Email),
+		Headers: amqp.Table{
+			"x-delay": cfg.RabbitMQDelay, // 使用配置值
+		},
+	}
 
-		if err != nil {
-			log.Printf("Failed to send welcome email: %v", err)
-		}
+	err = ch.Publish(
+		rabbitmq.DelayedExchange,
+		"", // routing key
+		false,
+		false,
+		msg,
+	)
+
+	if err != nil {
+		log.Printf("Failed to send welcome email: %v", err)
 	}
 }
 
@@ -141,6 +135,26 @@ func Login(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"token": token})
+}
+
+// RefreshToken 添加新的路由处理函数
+func RefreshToken(c *gin.Context) {
+	var req struct {
+		Token string `json:"token" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	newToken, err := utils.RefreshToken(req.Token)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"token": newToken})
 }
 
 func ProtectedEndpoint(c *gin.Context) {
