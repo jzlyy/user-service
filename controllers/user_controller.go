@@ -5,14 +5,29 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
+	"log"
 	"net/http"
 	"user-service/database"
+	"user-service/utils"
 )
 
 func GetUserProfile(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	// 尝试从缓存获取
+	var cachedUser struct {
+		ID        int    `json:"id"`
+		Username  string `json:"username"`
+		Email     string `json:"email"`
+		CreatedAt string `json:"created_at"`
+	}
+
+	if found, err := utils.GetUserCache(userID.(int), &cachedUser); err == nil && found {
+		c.JSON(http.StatusOK, cachedUser)
 		return
 	}
 
@@ -35,6 +50,12 @@ func GetUserProfile(c *gin.Context) {
 	case err != nil:
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 	default:
+		// 更新缓存（异步）
+		go func() {
+			if err := utils.SetUserCache(user.ID, user); err != nil {
+				log.Printf("Failed to cache user: %v", err)
+			}
+		}()
 		c.JSON(http.StatusOK, user)
 	}
 }
@@ -81,6 +102,13 @@ func UpdatePassword(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not update password"})
 		return
 	}
+
+	// 更新成功后删除缓存
+	go func() {
+		if err := utils.InvalidateUserCache(userID.(int)); err != nil {
+			log.Printf("Failed to invalidate user cache: %v", err)
+		}
+	}()
 
 	c.JSON(http.StatusOK, gin.H{"message": "Password updated successfully"})
 }
