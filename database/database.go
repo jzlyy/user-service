@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"user-service/config"
 
@@ -9,6 +10,9 @@ import (
 )
 
 var DB *sql.DB
+var (
+	RedisError = errors.New("redis error")
+)
 
 func InitDB() error {
 	cfg := config.LoadConfig()
