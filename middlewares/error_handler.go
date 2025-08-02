@@ -30,4 +30,3 @@ func ErrorHandler() gin.HandlerFunc {
 		}
 	}
 }
-zz
