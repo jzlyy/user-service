@@ -29,3 +29,11 @@ func ParseToken(tokenString string) (int, error) {
 
 	return 0, err
 }
+
+func RefreshToken(tokenString string) (string, error) {
+	userID, err := ParseToken(tokenString)
+	if err != nil {
+		return "", err
+	}
+	return GenerateToken(userID)
+}
