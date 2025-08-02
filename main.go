@@ -62,6 +62,12 @@ func main() {
 	}
 	defer database.CloseDB()
 
+	// 初始化Redis
+	if err := database.InitRedis(); err != nil {
+		log.Fatalf("Redis initialization failed: %v", err)
+	}
+	defer database.CloseRedis()
+
 	r := gin.Default()
 
 	// 初始化RabbitMQ
