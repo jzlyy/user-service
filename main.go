@@ -70,10 +70,12 @@ func main() {
 
 	r := gin.Default()
 
+	// 注册错误处理中间件
+	r.Use(middlewares.ErrorHandler())
+
 	// 初始化RabbitMQ
 	rabbitConn, rabbitCleanup := rabbitmq.SetupRabbitMQ()
 	defer rabbitCleanup()
-	controllers.SetRabbitMQConnection(rabbitConn)
 
 	// 初始化etcd
 	initEtcd()
@@ -125,6 +127,7 @@ func main() {
 		protected.GET("/protected", controllers.ProtectedEndpoint)
 		protected.GET("/profile", controllers.GetUserProfile)
 		protected.PUT("/password", controllers.UpdatePassword)
+		protected.POST("/refresh-token", controllers.RefreshToken)
 	}
 
 	// 启动服务器
@@ -144,8 +147,8 @@ func initEtcd() {
 
 	etcdClient = client
 
-	// 修复：使用位置参数调用函数
-	if err := etcdClient.RegisterService(cfg.ServiceName, cfg.ServicePort, 15); err != nil {
+	// 修改注册调用
+	if err := etcdClient.RegisterService(cfg.ServiceName, cfg.ServicePort); err != nil {
 		log.Printf("ETCD service registration failed: %v", err)
 	} else {
 		log.Printf("Registered in ETCD as %s:%d", cfg.ServiceName, cfg.ServicePort)
