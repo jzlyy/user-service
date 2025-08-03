@@ -22,13 +22,15 @@ type Config struct {
 	FromEmail      string
 	SendGridAPIKey string
 	IsEUAccount    bool
-	EtcdAddress    string
-	EtcdUsername   string
-	EtcdPassword   string
+	NacosAddresses string `json:"nacos_addresses"`
+	NacosNamespace string `json:"nacos_namespace"`
+	NacosGroup     string `json:"nacos_group"`
+	NacosCluster   string `json:"nacos_cluster"`
+	NacosUsername  string `json:"nacos_username"`
+	NacosPassword  string `json:"nacos_password"`
 	ServiceName    string
 	ServicePort    int
 	RabbitMQDelay  int `json:"rabbitmq_delay"` // 延迟消息时间(毫秒)
-	EtcdTTL        int `json:"etcd_ttl"`       // ETCD租约时间(秒)
 	CacheTTL       int `json:"cache_ttl"`      // 缓存时间(分钟)
 }
 
@@ -47,20 +49,21 @@ func LoadConfig() *Config {
 		FromEmail:      getEnv("FROM_EMAIL", ""),
 		SendGridAPIKey: getEnv("SENDGRID_API_KEY", ""),
 		IsEUAccount:    getEnvAsBool("SENDGRID_EU_ACCOUNT", false),
-		EtcdAddress:    getEnv("ETCD_ADDRESS", ""),
-		EtcdUsername:   getEnv("ETCD_USERNAME", ""),
-		EtcdPassword:   getEnv("ETCD_PASSWORD", ""),
 		ServiceName:    getEnv("SERVICE_NAME", ""),
 		ServicePort:    getEnvAsInt("SERVICE_PORT", 8080),
 		RabbitMQDelay:  getEnvAsInt("RABBITMQ_DELAY", 5000),
-		EtcdTTL:        getEnvAsInt("ETCD_TTL", 15),
 		CacheTTL:       getEnvAsInt("CACHE_TTL", 30),
+		NacosAddresses: getEnv("NACOS_ADDRESSES", ""),
+		NacosNamespace: getEnv("NACOS_NAMESPACE", ""),
+		NacosGroup:     getEnv("NACOS_GROUP", ""),
+		NacosCluster:   getEnv("NACOS_CLUSTER", ""),
+		NacosUsername:  getEnv("NACOS_USERNAME", ""),
+		NacosPassword:  getEnv("NACOS_PASSWORD", ""),
 		RabbitMQURL: fmt.Sprintf("amqp://%s:%s@%s:%s", // 运行时拼接
 			getEnv("RABBITMQ_USER", ""),
 			getEnv("RABBITMQ_PASSWORD", ""),
 			getEnv("RABBITMQ_HOST", ""),
 			getEnv("RABBITMQ_PORT", ""))}
-
 }
 
 func getEnv(key, defaultValue string) string {
