@@ -5,7 +5,11 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 )
+
+var globalConfig *Config
+var configOnce sync.Once
 
 type Config struct {
 	DBUser         string
@@ -35,35 +39,39 @@ type Config struct {
 }
 
 func LoadConfig() *Config {
-	return &Config{
-		DBUser:         getEnv("DB_USER", ""),
-		DBHost:         getEnv("DB_HOST", ""),
-		DBPort:         getEnv("DB_PORT", ""),
-		DBPassword:     getEnv("DB_PASSWORD", ""),
-		DBName:         getEnv("DB_NAME", ""),
-		RedisHost:      getEnv("REDIS_HOST", ""),
-		RedisPort:      getEnv("REDIS_PORT", ""),
-		RedisPassword:  getEnv("REDIS_PASSWORD", ""),
-		RedisDB:        getEnvAsInt("REDIS_DB", 0),
-		JWTSecret:      getEnv("JWT_SECRET", ""),
-		FromEmail:      getEnv("FROM_EMAIL", ""),
-		SendGridAPIKey: getEnv("SENDGRID_API_KEY", ""),
-		IsEUAccount:    getEnvAsBool("SENDGRID_EU_ACCOUNT", false),
-		ServiceName:    getEnv("SERVICE_NAME", ""),
-		ServicePort:    getEnvAsInt("SERVICE_PORT", 8080),
-		RabbitMQDelay:  getEnvAsInt("RABBITMQ_DELAY", 5000),
-		CacheTTL:       getEnvAsInt("CACHE_TTL", 30),
-		NacosAddresses: getEnv("NACOS_ADDRESSES", ""),
-		NacosNamespace: getEnv("NACOS_NAMESPACE", ""),
-		NacosGroup:     getEnv("NACOS_GROUP", ""),
-		NacosCluster:   getEnv("NACOS_CLUSTER", ""),
-		NacosUsername:  getEnv("NACOS_USERNAME", ""),
-		NacosPassword:  getEnv("NACOS_PASSWORD", ""),
-		RabbitMQURL: fmt.Sprintf("amqp://%s:%s@%s:%s", // 运行时拼接
+	configOnce.Do(func() {
+		globalConfig = &Config{
+			DBUser:         getEnv("DB_USER", ""),
+			DBHost:         getEnv("DB_HOST", ""),
+			DBPort:         getEnv("DB_PORT", ""),
+			DBPassword:     getEnv("DB_PASSWORD", ""),
+			DBName:         getEnv("DB_NAME", ""),
+			RedisHost:      getEnv("REDIS_HOST", ""),
+			RedisPort:      getEnv("REDIS_PORT", ""),
+			RedisPassword:  getEnv("REDIS_PASSWORD", ""),
+			RedisDB:        getEnvAsInt("REDIS_DB", 0),
+			JWTSecret:      getEnv("JWT_SECRET", ""),
+			FromEmail:      getEnv("FROM_EMAIL", ""),
+			SendGridAPIKey: getEnv("SENDGRID_API_KEY", ""),
+			IsEUAccount:    getEnvAsBool("SENDGRID_EU_ACCOUNT", false),
+			ServiceName:    getEnv("SERVICE_NAME", ""),
+			ServicePort:    getEnvAsInt("SERVICE_PORT", 8080),
+			RabbitMQDelay:  getEnvAsInt("RABBITMQ_DELAY", 5000),
+			CacheTTL:       getEnvAsInt("CACHE_TTL", 30),
+			NacosAddresses: getEnv("NACOS_ADDRESSES", ""),
+			NacosNamespace: getEnv("NACOS_NAMESPACE", ""),
+			NacosGroup:     getEnv("NACOS_GROUP", ""),
+			NacosCluster:   getEnv("NACOS_CLUSTER", ""),
+			NacosUsername:  getEnv("NACOS_USERNAME", ""),
+			NacosPassword:  getEnv("NACOS_PASSWORD", ""),
+		}
+		globalConfig.RabbitMQURL = fmt.Sprintf("amqp://%s:%s@%s:%s", // 运行时拼接
 			getEnv("RABBITMQ_USER", ""),
 			getEnv("RABBITMQ_PASSWORD", ""),
 			getEnv("RABBITMQ_HOST", ""),
-			getEnv("RABBITMQ_PORT", ""))}
+			getEnv("RABBITMQ_PORT", ""))
+	})
+	return globalConfig
 }
 
 func getEnv(key, defaultValue string) string {
