@@ -15,6 +15,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+var nacosClient *utils.NacosClient
+
 // 添加邮件消费者实现
 func startEmailConsumer(ch *amqp.Channel) {
 	msgs, err := ch.Consume(
@@ -53,8 +55,6 @@ func startEmailConsumer(ch *amqp.Channel) {
 	}()
 }
 
-var etcdClient *utils.EtcdClient
-
 func main() {
 	// 初始化数据库
 	if err := database.InitDB(); err != nil {
@@ -77,9 +77,9 @@ func main() {
 	rabbitConn, rabbitCleanup := rabbitmq.SetupRabbitMQ()
 	defer rabbitCleanup()
 
-	// 初始化etcd
-	initEtcd()
-	defer deregisterEtcd()
+	// 初始化Nacos
+	initNacos()
+	defer deregisterNacos()
 
 	// 为邮件消费者创建专用通道
 	ch, err := rabbitConn.Channel()
@@ -131,37 +131,34 @@ func main() {
 	}
 
 	// 启动服务器
-	log.Println("Starting server on :8080")
-	if err := r.Run(":8080"); err != nil {
+	log.Println("Starting server on :8088")
+	if err := r.Run(":8088"); err != nil {
 		log.Fatalf("Server failed to start: %v", err)
 	}
 }
 
-func initEtcd() {
+func initNacos() {
 	cfg := config.LoadConfig()
-	client, err := utils.NewEtcdClient(cfg.EtcdAddress, cfg.EtcdUsername, cfg.EtcdPassword)
+	client, err := utils.NewNacosClient(cfg)
 	if err != nil {
-		log.Printf("ETCD connection failed: %v", err)
+		log.Printf("Nacos initialization failed: %v", err)
 		return
 	}
+	nacosClient = client // 赋值给全局变量
 
-	etcdClient = client
-
-	// 修改注册调用
-	if err := etcdClient.RegisterService(cfg.ServiceName, cfg.ServicePort); err != nil {
-		log.Printf("ETCD service registration failed: %v", err)
+	if err := nacosClient.RegisterService(); err != nil {
+		log.Printf("Nacos service registration failed: %v", err)
 	} else {
-		log.Printf("Registered in ETCD as %s:%d", cfg.ServiceName, cfg.ServicePort)
+		log.Printf("Registered in Nacos as %s:%d", cfg.ServiceName, cfg.ServicePort)
 	}
 }
 
-func deregisterEtcd() {
-	if etcdClient != nil {
-		if err := etcdClient.DeregisterService(); err != nil {
-			log.Printf("ETCD deregister failed: %v", err)
+func deregisterNacos() {
+	if nacosClient != nil {
+		if err := nacosClient.DeregisterService(); err != nil {
+			log.Printf("Nacos deregister failed: %v", err)
 		} else {
-			log.Println("Deregistered from ETCD")
+			log.Println("Deregistered from Nacos")
 		}
-		etcdClient.Close()
 	}
 }
