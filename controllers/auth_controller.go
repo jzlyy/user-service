@@ -65,7 +65,7 @@ func Register(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"id": userID, "message": "User created"})
 
 	// 注册成功后发送延迟消息
-	ch := rabbitmq.GetChannel()
+	ch, _ := rabbitmq.GetChannel()
 	if ch == nil {
 		log.Printf("Failed to get RabbitMQ channel")
 		return
