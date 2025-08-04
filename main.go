@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"github.com/opentracing/opentracing-go"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
@@ -117,12 +118,39 @@ func main() {
 
 	// 健康检查端点
 	r.GET("/health", func(c *gin.Context) {
-		// 添加数据库检查
+		status := http.StatusOK
+		components := make(map[string]string)
+
+		// 数据库检查
 		if err := database.DB.Ping(); err != nil {
-			c.JSON(http.StatusServiceUnavailable, gin.H{"status": "unhealthy"})
-			return
+			status = http.StatusServiceUnavailable
+			components["database"] = "down"
+		} else {
+			components["database"] = "ok"
 		}
-		c.JSON(http.StatusOK, gin.H{"status": "healthy"})
+
+		// Redis检查
+		if _, err := database.RedisClient.Ping(context.Background()).Result(); err != nil {
+			status = http.StatusServiceUnavailable
+			components["redis"] = "down"
+		} else {
+			components["redis"] = "ok"
+		}
+
+		// RabbitMQ检查
+		ch, err := rabbitmq.GetChannel()
+		if err != nil {
+			status = http.StatusServiceUnavailable
+			components["rabbitmq"] = "down"
+		} else {
+			components["rabbitmq"] = "ok"
+			rabbitmq.ReleaseChannel(ch)
+		}
+
+		c.JSON(status, gin.H{
+			"status":     http.StatusText(status),
+			"components": components,
+		})
 	})
 
 	// 公共路由
