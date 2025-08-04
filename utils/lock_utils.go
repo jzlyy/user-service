@@ -6,10 +6,6 @@ import (
 	"user-service/database"
 )
 
-const (
-	DefaultLockTimeout = 5 * time.Second
-)
-
 func AcquireLock(key string, timeout time.Duration) bool {
 	ctx := context.Background()
 	return database.RedisClient.SetNX(ctx, "lock:"+key, "1", timeout).Val()
