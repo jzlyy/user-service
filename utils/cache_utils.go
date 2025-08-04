@@ -10,7 +10,6 @@ import (
 	"time"
 	"user-service/config"
 	"user-service/database"
-	"user-service/models"
 	"user-service/services"
 )
 
@@ -82,15 +81,4 @@ func InvalidateUserCache(userID int) error {
 
 func userCacheKey(userID int) string {
 	return "user:" + strconv.Itoa(userID)
-}
-
-// 添加本地用户查询函数
-func getUserByID(userID int) (*models.User, error) {
-	// 实际项目中应该从数据库查询
-	// 这里简化实现
-	return &models.User{
-		ID:       userID,
-		Username: "placeholder",
-		Email:    "placeholder@example.com",
-	}, nil
 }
