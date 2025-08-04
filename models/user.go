@@ -6,13 +6,13 @@ import (
 
 type User struct {
 	ID        int       `json:"id"`
-	Username  string    `json:"username" binding:"required,min=3"`
-	Email     string    `json:"email" binding:"required,email"`
+	Username  string    `json:"username" binding:"omitempty,min=3"`
+	Email     string    `json:"email" binding:"omitempty,email"`
 	Password  string    `json:"password" binding:"required,min=6"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
 type LoginRequest struct {
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=6"`
+	Identifier string `json:"identifier" binding:"required"` // 统一标识符字段
+	Password   string `json:"password" binding:"required,min=6"`
 }
