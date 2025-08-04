@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/opentracing/opentracing-go"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
 	"net/http"
@@ -81,6 +82,14 @@ func main() {
 	initNacos()
 	defer deregisterNacos()
 
+	// 初始化追踪
+	tracer, closer, err := utils.InitTracing("user-service")
+	if err != nil {
+		log.Fatalf("Failed to init tracing: %v", err)
+	}
+	defer closer()
+	opentracing.SetGlobalTracer(tracer)
+
 	// 为邮件消费者创建专用通道
 	ch, err := rabbitConn.Channel()
 	if err != nil {
@@ -102,6 +111,9 @@ func main() {
 
 	// 添加Prometheus metrics端点
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
+
+	//应用链路追踪中间件
+	r.Use(middlewares.TracingMiddleware())
 
 	// 健康检查端点
 	r.GET("/health", func(c *gin.Context) {
