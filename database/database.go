@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 	"user-service/config"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -27,8 +28,12 @@ func InitDB() error {
 	if err = db.Ping(); err != nil {
 		return err
 	}
-
 	DB = db
+
+	db.SetMaxOpenConns(50)
+	db.SetMaxIdleConns(10)
+	db.SetConnMaxLifetime(5 * time.Minute)
+
 	return nil
 }
 
