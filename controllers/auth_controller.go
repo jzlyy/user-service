@@ -105,10 +105,22 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	// 检查是邮箱还是用户名
 	var user models.User
+	var queryField string
+	var queryValue string
+
+	if utils.IsEmail(req.Identifier) {
+		queryField = "email"
+		queryValue = req.Identifier
+	} else {
+		queryField = "username"
+		queryValue = req.Identifier
+	}
+
 	err := database.DB.QueryRow(
-		"SELECT id, password FROM users WHERE email = ?",
-		req.Email,
+		"SELECT id, password FROM users WHERE "+queryField+" = ?",
+		queryValue,
 	).Scan(&user.ID, &user.Password)
 
 	if err != nil {
@@ -121,7 +133,7 @@ func Login(c *gin.Context) {
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		log.Printf("[AUDIT] Failed login attempt: %s", req.Email)
+		log.Printf("[AUDIT] Failed login attempt: %s", req.Identifier)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
