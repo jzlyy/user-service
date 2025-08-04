@@ -103,8 +103,8 @@ func SetupRabbitMQ() (*amqp.Connection, func()) {
 }
 
 // GetChannel 获取通道
-func GetChannel() *amqp.Channel {
-	return channelPool.Get().(*amqp.Channel)
+func GetChannel() (*amqp.Channel, *amqp.Channel) {
+	return channelPool.Get().(*amqp.Channel), nil
 }
 
 // ReleaseChannel 释放通道
