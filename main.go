@@ -6,6 +6,10 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 	"user-service/config"
 	"user-service/controllers"
 	"user-service/database"
@@ -171,10 +175,38 @@ func main() {
 	}
 
 	// 启动服务器
-	log.Println("Starting server on :8080")
-	if err := r.Run(":8080"); err != nil {
-		log.Fatalf("Server failed to start: %v", err)
+	srv := &http.Server{
+		Addr:    ":8080",
+		Handler: r,
 	}
+
+	// 优雅停机
+	go func() {
+		log.Println("Starting server on :8080")
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen: %s\n", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("Shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatal("Server forced to shutdown:", err)
+	}
+
+	// 清理资源
+	deregisterNacos()
+	database.CloseDB()
+	database.CloseRedis()
+	rabbitCleanup()
+
+	log.Println("Server exiting")
 }
 
 func initNacos() {
