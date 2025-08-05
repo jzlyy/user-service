@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 	"user-service/config"
 
@@ -30,10 +31,29 @@ func InitDB() error {
 	}
 	DB = db
 
-	db.SetMaxOpenConns(100)
-	db.SetMaxIdleConns(20)
-	db.SetConnMaxLifetime(10 * time.Minute)
-	db.SetConnMaxIdleTime(5 * time.Minute)
+	db.SetMaxOpenConns(50)
+	db.SetMaxIdleConns(25)
+	db.SetConnMaxLifetime(30 * time.Minute)
+	db.SetConnMaxIdleTime(10 * time.Minute)
+
+	// 健康检查协程
+	go func() {
+		ticker := time.NewTicker(1 * time.Minute)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			if err := db.Ping(); err != nil {
+				log.Printf("Database connection unhealthy: %v", err)
+
+				// 尝试恢复连接
+				if err := db.Close(); err == nil {
+					if newDB, err := sql.Open("mysql", dsn); err == nil {
+						db = newDB
+					}
+				}
+			}
+		}
+	}()
 
 	return nil
 }
