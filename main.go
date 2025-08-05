@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"github.com/opentracing/opentracing-go"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
@@ -174,37 +175,60 @@ func main() {
 		protected.POST("/refresh-token", controllers.RefreshToken)
 	}
 
-	// 启动服务器
+	// 建立连接
 	srv := &http.Server{
 		Addr:    ":8080",
 		Handler: r,
 	}
 
-	// 优雅停机
+	// 创建优雅关闭信号通道
+	shutdown := make(chan struct{})
+
+	// 启动服务器
 	go func() {
-		log.Println("Starting server on :8080")
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("listen: %s\n", err)
+		}
+		close(shutdown)
+	}()
+
+	// 等待关闭信号
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	select {
+	case <-quit:
+		log.Println("Shutdown initiated...")
+	case <-shutdown:
+		log.Println("Server closed unexpectedly")
+	}
+
+	// 分阶段关闭
+	phase1 := make(chan struct{})
+	go func() {
+		defer close(phase1)
+
+		// 第一阶段：关闭外部依赖
+		deregisterNacos()
+		rabbitCleanup()
+
+		// 停止接受新请求
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+		err := srv.Shutdown(ctx)
+		if err != nil {
+			return
 		}
 	}()
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-	log.Println("Shutting down server...")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatal("Server forced to shutdown:", err)
+	// 第二阶段：关闭数据库连接
+	select {
+	case <-phase1:
+	case <-time.After(20 * time.Second):
 	}
 
-	// 清理资源
-	deregisterNacos()
 	database.CloseDB()
 	database.CloseRedis()
-	rabbitCleanup()
 
 	log.Println("Server exiting")
 }
