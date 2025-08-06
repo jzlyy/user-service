@@ -31,6 +31,9 @@ WORKDIR /app
 # 从构建阶段复制二进制文件 (修正名称)
 COPY --from=builder /app/user-service .
 
+# 如果需要保留 docs（开发环境），取消下面这行注释
+# COPY --from=builder /app/docs ./docs
+
 # 暴露端口
 EXPOSE 8080
 
