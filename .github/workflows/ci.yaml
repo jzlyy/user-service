@@ -18,6 +18,13 @@ jobs:
         with:
           go-version: '1.24'
 
+      # 安装 swag 并生成 docs 目录（关键步骤）
+      - name: Install Swag CLI
+        run: go install github.com/swaggo/swag/cmd/swag@latest
+
+      - name: Generate Swagger Docs
+        run: swag init -g main.go  # 确保与你的 main.go 路径匹配
+
       - name: Build optimized binary
         run: |
           CGO_ENABLED=0 GOOS=linux go build \
@@ -31,9 +38,9 @@ jobs:
       - name: Login to Aliyun Container Registry (ACR)
         uses: docker/login-action@v3
         with:
-          registry: ${{ secrets.ALIYUN_ACR_REGISTRY }}  # 例如: registry.cn-hangzhou.aliyuncs.com
-          username: ${{ secrets.ALIYUN_ACR_USERNAME }}  # 阿里云账号ID（不是登录名）
-          password: ${{ secrets.ALIYUN_ACR_PASSWORD }}  # 开通容器镜像服务的RAM用户密码
+          registry: ${{ secrets.ALIYUN_ACR_REGISTRY }}
+          username: ${{ secrets.ALIYUN_ACR_USERNAME }}
+          password: ${{ secrets.ALIYUN_ACR_PASSWORD }}
 
       - name: Build and push optimized image
         uses: docker/build-push-action@v5
