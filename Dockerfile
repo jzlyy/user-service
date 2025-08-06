@@ -13,6 +13,10 @@ RUN go mod download
 # 复制所有源码
 COPY . .
 
+# swag（如果编译阶段需要）
+RUN go install github.com/swaggo/swag/cmd/swag@latest
+RUN swag init -g main.go  # 再次生成,确保与代码同步
+
 # 构建应用 (注意修正二进制文件名)
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o user-service ./main.go
 
