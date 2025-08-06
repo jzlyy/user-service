@@ -2,13 +2,14 @@ package utils
 
 import (
 	"context"
-	"golang.org/x/crypto/bcrypt"
 	"log"
 	"regexp"
 	"strconv"
 	"time"
 	"unicode"
 	"user-service/database"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 const MaxPasswordHistory = 5 // 保留的历史密码数量
