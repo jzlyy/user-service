@@ -2,11 +2,12 @@ package middlewares
 
 import (
 	"context"
-	"github.com/gin-gonic/gin"
-	"golang.org/x/time/rate"
 	"net/http"
 	"time"
 	"user-service/database"
+
+	"github.com/gin-gonic/gin"
+	"golang.org/x/time/rate"
 )
 
 func RateLimiter() gin.HandlerFunc {
