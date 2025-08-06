@@ -1,10 +1,11 @@
 package middlewares
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	"net/http"
 )
 
 func TracingMiddleware() gin.HandlerFunc {
