@@ -2,13 +2,14 @@ package utils
 
 import (
 	"fmt"
+	"log"
+	"net"
+	"user-service/config"
+
 	"github.com/nacos-group/nacos-sdk-go/clients"
 	"github.com/nacos-group/nacos-sdk-go/clients/naming_client"
 	"github.com/nacos-group/nacos-sdk-go/common/constant"
 	"github.com/nacos-group/nacos-sdk-go/vo"
-	"log"
-	"net"
-	"user-service/config"
 )
 
 type NacosClient struct {
