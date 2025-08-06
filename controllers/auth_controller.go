@@ -17,6 +17,22 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// RefreshTokenRequest 刷新令牌请求结构体
+type RefreshTokenRequest struct {
+	Token string `json:"token" binding:"required"`
+}
+
+// Register godoc
+// @Summary 注册新用户
+// @Description 注册一个新用户
+// @Tags auth
+// @Accept  json
+// @Produce  json
+// @Param   user body models.User true "用户信息"
+// @Success 201 {object} map[string]interface{} "创建成功"
+// @Failure 400 {object} map[string]string "请求错误"
+// @Failure 500 {object} map[string]string "服务器错误"
+// @Router /register [post]
 func Register(c *gin.Context) {
 	// 添加配置加载
 	cfg := config.LoadConfig()
@@ -98,6 +114,17 @@ func Register(c *gin.Context) {
 	}
 }
 
+// Login godoc
+// @Summary 用户登录
+// @Description 用户登录并获取Token
+// @Tags auth
+// @Accept  json
+// @Produce  json
+// @Param   credentials body models.LoginRequest true "登录凭证"
+// @Success 200 {object} map[string]string "登录成功"
+// @Failure 400 {object} map[string]string "请求错误"
+// @Failure 401 {object} map[string]string "认证失败"
+// @Router /login [post]
 func Login(c *gin.Context) {
 	var req models.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -149,6 +176,17 @@ func Login(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
+// RefreshToken godoc
+// @Summary 刷新Token
+// @Description 使用旧Token获取新Token
+// @Tags auth
+// @Accept  json
+// @Produce  json
+// @Param   request body RefreshTokenRequest true "刷新令牌请求"
+// @Success 200 {object} map[string]string "刷新成功"
+// @Failure 400 {object} map[string]string "请求错误"
+// @Failure 401 {object} map[string]string "认证失败"
+// @Router /refresh-token [post]
 // RefreshToken 添加新的路由处理函数
 func RefreshToken(c *gin.Context) {
 	var req struct {
