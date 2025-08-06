@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/go-redis/redis/v8"
 	"log"
 	"strconv"
 	"time"
 	"user-service/config"
 	"user-service/database"
 	"user-service/services"
+
+	"github.com/go-redis/redis/v8"
 )
 
 // CacheLockTimeout 获取缓存锁的超时时间
