@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"github.com/opentracing/opentracing-go"
-	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
 	"net/http"
 	"os"
@@ -14,12 +12,18 @@ import (
 	"user-service/config"
 	"user-service/controllers"
 	"user-service/database"
+	_ "user-service/docs"
 	"user-service/middlewares"
 	"user-service/rabbitmq"
 	"user-service/utils"
 
+	"github.com/opentracing/opentracing-go"
+	amqp "github.com/rabbitmq/amqp091-go"
+
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 var nacosClient *utils.NacosClient
@@ -62,6 +66,23 @@ func startEmailConsumer(ch *amqp.Channel) {
 	}()
 }
 
+// @title User Service API
+// @version 1.0
+// @description This is a user registration center microservice.
+
+// @contact.name API Support
+// @contact.url http://www.example.com/support
+// @contact.email support@example.com
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:8080
+// @BasePath /api
+
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
 func main() {
 	// 初始化数据库
 	if err := database.InitDB(); err != nil {
@@ -118,9 +139,19 @@ func main() {
 	// 添加Prometheus metrics端点
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
+	// 添加 Swagger 路由
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	//应用链路追踪中间件
 	r.Use(middlewares.TracingMiddleware())
 
+	// HealthCheck godoc
+	// @Summary 服务健康检查
+	// @Description 检查服务及其依赖的健康状态
+	// @Tags system
+	// @Produce  json
+	// @Success 200 {object} map[string]interface{} "服务健康"
+	// @Router /health [get]
 	// 健康检查端点
 	r.GET("/health", func(c *gin.Context) {
 		status := http.StatusOK
