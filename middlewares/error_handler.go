@@ -3,6 +3,7 @@ package middlewares
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"user-service/database"
@@ -16,7 +17,7 @@ func ErrorHandler() gin.HandlerFunc {
 
 		if len(c.Errors) > 0 {
 			err := c.Errors.Last()
-			log.Printf("[ERROR] %s: %v", c.Request.URL.Path, err.Err)
+			log.Printf("[ERROR] %s %s: %+v", c.Request.Method, c.Request.URL.Path, err.Err)
 
 			switch {
 			case errors.Is(err.Err, sql.ErrNoRows):
@@ -24,7 +25,14 @@ func ErrorHandler() gin.HandlerFunc {
 			case errors.Is(err.Err, database.RedisError):
 				c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Service temporarily unavailable"})
 			default:
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+				if gin.Mode() == gin.DebugMode {
+					c.JSON(http.StatusInternalServerError, gin.H{
+						"error": err.Err.Error(),
+						"stack": fmt.Sprintf("%+v", err.Err),
+					})
+				} else {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+				}
 			}
 			c.Abort()
 		}
