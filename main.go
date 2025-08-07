@@ -204,6 +204,7 @@ func main() {
 		protected.GET("/profile", controllers.GetUserProfile)
 		protected.PUT("/password", controllers.UpdatePassword)
 		protected.POST("/refresh-token", controllers.RefreshToken)
+		protected.POST("/logout", controllers.Logout)
 	}
 
 	// 建立连接
