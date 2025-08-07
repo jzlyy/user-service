@@ -47,6 +47,12 @@ func GetUserCache(userID int, dest interface{}) (bool, error) {
 		if AcquireLock(lockKey, CacheLockTimeout) {
 			defer ReleaseLock(lockKey)
 
+			// 双重检查缓存
+			data, err := database.RedisClient.Get(ctx, key).Bytes()
+			if err == nil {
+				return true, json.Unmarshal(data, dest)
+			}
+
 			// 从数据库加载 - 使用services包
 			user, err := services.GetUserByID(userID)
 			if err != nil {
@@ -62,9 +68,25 @@ func GetUserCache(userID int, dest interface{}) (bool, error) {
 			jsonData, _ := json.Marshal(user)
 			return true, json.Unmarshal(jsonData, dest)
 		} else {
-			// 等待其他请求完成缓存
-			time.Sleep(500 * time.Millisecond)
-			return GetUserCache(userID, dest) // 重试
+			// 指数退避重试
+			waitTime := 100 * time.Millisecond
+			maxWait := 1 * time.Second
+			for {
+				time.Sleep(waitTime)
+				data, err := database.RedisClient.Get(ctx, key).Bytes()
+				if err == nil {
+					return true, json.Unmarshal(data, dest)
+				}
+
+				waitTime *= 2
+				if waitTime > maxWait {
+					waitTime = maxWait
+				}
+
+				if ctx.Err() != nil {
+					return false, ctx.Err()
+				}
+			}
 		}
 
 	} else if err != nil {
