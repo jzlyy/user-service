@@ -1,6 +1,7 @@
 package rabbitmq
 
 import (
+	"errors"
 	"log"
 	"sync"
 	"user-service/config"
@@ -103,13 +104,17 @@ func SetupRabbitMQ() (*amqp.Connection, func()) {
 }
 
 // GetChannel 获取通道
-func GetChannel() (*amqp.Channel, *amqp.Channel) {
-	return channelPool.Get().(*amqp.Channel), nil
+func GetChannel() (*amqp.Channel, error) {
+	ch := channelPool.Get()
+	if ch == nil {
+		return nil, errors.New("failed to create channel")
+	}
+	return ch.(*amqp.Channel), nil
 }
 
 // ReleaseChannel 释放通道
 func ReleaseChannel(ch *amqp.Channel) {
-	if ch != nil {
+	if ch != nil && !ch.IsClosed() {
 		channelPool.Put(ch)
 	}
 }
