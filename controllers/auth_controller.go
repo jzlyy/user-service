@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 	"user-service/config"
 	"user-service/database"
@@ -63,7 +64,22 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	result, err := database.DB.Exec(
+	// 开始事务
+	tx, err := database.DB.Begin()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not start transaction"})
+		return
+	}
+	defer func() {
+		if err != nil {
+			err := tx.Rollback()
+			if err != nil {
+				return
+			}
+		}
+	}()
+
+	result, err := tx.Exec(
 		"INSERT INTO users (username, email, password, created_at) VALUES (?, ?, ?, ?)",
 		user.Username,
 		user.Email,
@@ -78,7 +94,12 @@ func Register(c *gin.Context) {
 
 	userID, _ := result.LastInsertId()
 	log.Printf("[AUDIT] User registered: ID=%d, Email=%s", userID, user.Email)
-	c.JSON(http.StatusCreated, gin.H{"id": userID, "message": "User created"})
+
+	// 提交事务
+	if err = tx.Commit(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Transaction commit failed"})
+		return
+	}
 
 	// 注册成功后发送延迟消息
 	ch, _ := rabbitmq.GetChannel()
@@ -174,6 +195,35 @@ func Login(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"token": token})
+}
+
+// Logout godoc
+// @Summary 用户登出
+// @Description 使当前用户的JWT令牌失效
+// @Tags auth
+// @Security ApiKeyAuth
+// @Success 200 {object} map[string]string "登出成功"
+// @Failure 400 {object} map[string]string "请求错误"
+// @Failure 500 {object} map[string]string "服务器错误"
+// @Router /logout [post]
+func Logout(c *gin.Context) {
+	// 从请求头获取令牌
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Authorization header required"})
+		return
+	}
+
+	// 提取令牌值 (去除 "Bearer " 前缀)
+	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+
+	// 将令牌加入黑名单
+	if err := utils.BlacklistToken(tokenString); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to invalidate token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
 }
 
 // RefreshToken godoc
