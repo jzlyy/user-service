@@ -102,7 +102,6 @@ func UpdatePassword(c *gin.Context) {
 		return
 	}
 
-	// 验证旧密码
 	var currentPassword string
 	err := database.DB.QueryRow("SELECT password FROM users WHERE id = ?", userID).Scan(&currentPassword)
 	if err != nil {
@@ -115,8 +114,15 @@ func UpdatePassword(c *gin.Context) {
 		return
 	}
 
+	// 验证旧密码
 	if err := bcrypt.CompareHashAndPassword([]byte(currentPassword), []byte(req.OldPassword)); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid old password"})
+		return
+	}
+
+	// 检查新密码是否与旧密码相同
+	if bcrypt.CompareHashAndPassword([]byte(currentPassword), []byte(req.NewPassword)) == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "New password cannot be same as old password"})
 		return
 	}
 
