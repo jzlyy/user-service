@@ -2,9 +2,15 @@ package utils
 
 import (
 	"context"
+	"crypto/sha1"
+	"encoding/hex"
+	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 	"unicode"
 	"user-service/database"
@@ -15,6 +21,10 @@ import (
 const MaxPasswordHistory = 5 // 保留的历史密码数量
 
 func ValidatePasswordStrength(password string) bool {
+	// 检查密码是否已泄露
+	if isPasswordCompromised(password) {
+		return false
+	}
 	if len(password) < 8 {
 		return false
 	}
@@ -55,6 +65,35 @@ func ValidatePasswordStrength(password string) bool {
 	}
 
 	return criteriaMet >= 3
+}
+
+// 检查密码是否已泄露
+func isPasswordCompromised(password string) bool {
+	h := sha1.New()
+	h.Write([]byte(password))
+	hash := strings.ToUpper(hex.EncodeToString(h.Sum(nil)))
+	prefix := hash[:5]
+	suffix := hash[5:]
+
+	// 调用HIBP API检查密码是否泄露
+	resp, err := http.Get(fmt.Sprintf("https://api.pwnedpasswords.com/range/%s", prefix))
+	if err != nil {
+		return false
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(resp.Body)
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return false
+	}
+
+	// 检查后缀是否存在
+	return strings.Contains(string(body), suffix)
 }
 
 func IsPasswordUsed(userID int, newPassword string) bool {
