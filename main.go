@@ -17,6 +17,7 @@ import (
 	"user-service/rabbitmq"
 	"user-service/utils"
 
+	"github.com/gin-contrib/cors"
 	"github.com/opentracing/opentracing-go"
 	amqp "github.com/rabbitmq/amqp091-go"
 
@@ -84,6 +85,18 @@ func startEmailConsumer(ch *amqp.Channel) {
 // @in header
 // @name Authorization
 func main() {
+	r := gin.Default()
+
+	// 添加CORS中间件
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"}, // 前端开发地址
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
 	// 初始化数据库
 	if err := database.InitDB(); err != nil {
 		log.Fatalf("Database initialization failed: %v", err)
@@ -95,8 +108,6 @@ func main() {
 		log.Fatalf("Redis initialization failed: %v", err)
 	}
 	defer database.CloseRedis()
-
-	r := gin.Default()
 
 	// 注册错误处理中间件
 	r.Use(middlewares.ErrorHandler())
