@@ -17,6 +17,7 @@ require (
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
 	golang.org/x/crypto v0.40.0
 	golang.org/x/time v0.12.0
+	github.com/gin-contrib/cors v1.7.6
 )
 
 require (
