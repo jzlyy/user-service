@@ -15,6 +15,7 @@ require (
 	github.com/sendgrid/sendgrid-go v3.16.1+incompatible
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.0
+	github.com/swaggo/swag v1.16.6
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
 	golang.org/x/crypto v0.41.0
 	golang.org/x/time v0.12.0
@@ -59,7 +60,6 @@ require (
 	github.com/prometheus/procfs v0.17.0 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/sendgrid/rest v2.6.9+incompatible // indirect
-	github.com/swaggo/swag v1.16.6 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/ugorji/go/codec v1.3.0 // indirect
