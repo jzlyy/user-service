@@ -11,5 +11,5 @@ spec:
       - name: user-service
         resources:
           limits:
-            cpu: "200m"
-            memory: "400Mi"
+            cpu: "300m"
+            memory: "650Mi"
