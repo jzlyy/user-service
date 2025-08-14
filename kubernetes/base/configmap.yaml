@@ -15,7 +15,7 @@ data:
   RABBITMQ_PORT: "5672"
   RABBITMQ_DELAY: "5000"
   CACHE_TTL: "30"
-  NACOS_ADDRESSES: "nacos.nacos.svc.cluster.local"
+  NACOS_ADDRESSES: "mse-96d22c713-nacos-ans.mse.aliyuncs.com"
   NACOS_NAMESPACE: "product"
   NACOS_GROUP: "DEFAULT_GROUP"
   NACOS_CLUSTER: "DEFAULT"
