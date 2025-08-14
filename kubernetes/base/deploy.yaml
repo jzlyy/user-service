@@ -15,12 +15,12 @@ spec:
       labels:
         app: user
       annotations:
-        argocd-image-updater.argoproj.io/image-list: app=crpi-5dxngct78yux2w9r.cn-chengdu.personal.cr.aliyuncs.com/product_123/user-service
+        argocd-image-updater.argoproj.io/image-list: app=crpi-mc95723p4ndmj8y3.cn-chengdu.personal.cr.aliyuncs.com/product_123/user-service
         argocd-image-updater.argoproj.io/app.update-strategy: latest
     spec:
       containers:
         - name: user-service
-          image: crpi-5dxngct78yux2w9r.cn-chengdu.personal.cr.aliyuncs.com/product_123/user-service:latest
+          image: crpi-mc95723p4ndmj8y3.cn-chengdu.personal.cr.aliyuncs.com/product_123/user-service:latest
           ports:
             - containerPort: 8080
               name: user-backend
