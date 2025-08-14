@@ -41,23 +41,23 @@ spec:
           livenessProbe:
             tcpSocket:
               port: 8080
-            initalDelaySeconds: 30
+            initialDelaySeconds: 30
             periodSeconds: 15
             timeoutSeconds: 5
-            failureThshold: 3
-          readinressProbe:
+            failureThreshold: 3
+          readinessProbe:
             tcpSocket:
               port: 8080
-            initalDelaySeconds: 15
+            initialDelaySeconds: 15
             periodSeconds: 10
-            successThshold: 2
-            failureThshold: 3
+            successThreshold: 2
+            failureThreshold: 3
       imagePullSecrets:
         - name: aliyun-acr-secret
       volumes:
         - name: user-configmap
-          configmap:
-            secretName: user-service
+          configMap:
+            name: user-service
         - name: user-secret
           secret:
             secretName: user-service
