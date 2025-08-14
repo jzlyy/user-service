@@ -8,5 +8,5 @@ patches:
       kind: Deployment
       name: user-service
 images:
-  - name: crpi-5dxngct78yux2w9r.cn-chengdu.personal.cr.aliyuncs.com/product_123/user-service 
+  - name: crpi-mc95723p4ndmj8y3.cn-chengdu.personal.cr.aliyuncs.com/product_123/user-service
     newTag: latest  # ArgoCD Image Updater 会自动更新这个值
