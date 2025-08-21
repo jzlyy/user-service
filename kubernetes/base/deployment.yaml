@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service 
+  namespace: backend
+  labels:
+    app: user
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user
+  template:
+    metadata:
+      labels:
+        app: user
+      annotations:
+        argocd-image-updater.argoproj.io/image-list: app=crpi-mc95723p4ndmj8y3.cn-chengdu.personal.cr.aliyuncs.com/product_123/user-service
+        argocd-image-updater.argoproj.io/app.update-strategy: latest
+    spec:
+      containers:
+        - name: user-service
+          image: crpi-mc95723p4ndmj8y3.cn-chengdu.personal.cr.aliyuncs.com/product_123/user-service:latest
+          ports:
+            - containerPort: 8080
+              name: user-backend
+          volumeMounts:
+            - name: user-configmap
+              mountPath: "/etc/configmap"
+              readOnly: true
+            - name: user-secret 
+              mountPath: "/etc/secrets"
+              readOnly: true
+          resources:
+            requests:
+              cpu: 125m
+              memory: 400Mi
+            limits:
+              cpu: 256m
+              memory: 600Mi
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            successThreshold: 2
+            failureThreshold: 3
+      imagePullSecrets:
+        - name: aliyun-acr-secret
+      volumes:
+        - name: user-configmap
+          configMap:
+            name: user-service
+        - name: user-secret
+          secret:
+            secretName: user-service
+
