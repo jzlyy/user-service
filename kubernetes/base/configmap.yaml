@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: user-service
+  name: configmap
   namespace: backend
 data:
   GIN_MODE: "release"
