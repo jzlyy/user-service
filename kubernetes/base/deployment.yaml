@@ -57,8 +57,8 @@ spec:
       volumes:
         - name: user-configmap
           configMap:
-            name: user-service
+            name: configmap
         - name: user-secret
           secret:
-            secretName: user-service
+            secretName: secret
 
