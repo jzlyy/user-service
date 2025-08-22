@@ -27,10 +27,10 @@ spec:
           volumeMounts:
             - name: user-configmap
               mountPath: "/etc/configmap"
-              readOnly: true
+              readOnly: false
             - name: user-secret
               mountPath: "/etc/secrets"
-              readOnly: true
+              readOnly: false
           resources:
             requests:
               cpu: 120m
