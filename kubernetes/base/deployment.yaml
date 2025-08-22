@@ -25,10 +25,10 @@ spec:
             - containerPort: 8080
               name: user-backend
           volumeMounts:
-            - name: user
+            - name: user-configmap
               mountPath: "/etc/configmap"
               readOnly: true
-            - name: user
+            - name: user-secret
               mountPath: "/etc/secrets"
               readOnly: true
           resources:
@@ -55,10 +55,10 @@ spec:
       imagePullSecrets:
         - name: aliyun-acr-secret
       volumes:
-        - name: user
+        - name: user-configmap
           configMap:
             name: user-service
-        - name: user
+        - name: user-secret
           secret:
             secretName: user-service
 
